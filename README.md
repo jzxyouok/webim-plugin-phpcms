@@ -1,7 +1,7 @@
 webim-plugin-phpcms
 ===================
 
-WebIM for PHPCMS
+WebIM for PHPCMS v9
 
 Require
 =======
