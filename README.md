@@ -56,7 +56,7 @@ WebIM-for-PHPCMS插件类, 参考示例代码，实现下述接口:
 Router.php
 ==============================
 
-WebIM应用AJAX请求分发处理
+WebIM请求分发类
 
 
 Model.php
@@ -68,7 +68,7 @@ WebIM数据模型类
 App.php
 ==============================
 
-WebIM 应用入口类
+WebIM应用入口类
 
 
 Install.sql
