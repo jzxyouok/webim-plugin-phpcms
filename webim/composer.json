@@ -1,0 +1,8 @@
+{
+    "require": {
+        "php": ">=5.3.7",
+        "j4mie/idiorm": "1.4.*",
+        "webim/geoip-php": "*",
+        "webim/webim-php": "5.4"
+    }
+}

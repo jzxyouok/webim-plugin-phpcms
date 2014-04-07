@@ -1,0 +1,25 @@
+{
+    "name": "webim/webim-php",
+    "type": "library",
+    "version": "5.4.1",
+    "description": "PHP WebIM library for NexTalk",
+    "keywords": ["webim", "instant message", "nextalk"],
+    "homepage": "http://github.com/webim/webim-php",
+    "license": "MIT",
+    "require": {
+        "php": ">=5.3.10"
+    },
+    "autoload": {
+        "psr-0": {
+            "WebIM": "src/"
+        }
+    },
+    "authors": [
+      {
+        "name": "Ery Lee",
+        "email": "ery.lee@gmail.com",
+        "homepage": "http://nextalk.im",
+        "role": "Company"
+      }
+    ]
+}

@@ -1,0 +1,24 @@
+{
+    "name": "webim/geoip-php",
+    "type": "library",
+    "version": "0.1",
+    "description": "Simple GeoIP library",
+    "keywords": ["geoip"],
+    "homepage": "http://github.com/webim/geoip-php",
+    "license": "MIT",
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "autoload": {
+        "psr-0": {
+            "IP": ""
+        }
+    },
+    "authors": [
+      {
+        "name": "Ery Lee",
+        "email": "ery.lee@gmail.com",
+        "homepage": "http://nextalk.im"
+      }
+    ]
+}
