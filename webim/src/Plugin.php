@@ -43,7 +43,7 @@ class Plugin {
 		return array(
             'uid' => $uid,
             'id' => $uid,
-            'nick' => preg_replace('/uid/', 'user', $id),
+            'nick' => preg_replace('/uid/', 'user', $uid),
             'presence' => 'online',
             'show' => "available",
             'pic_url' => WEBIM_IMAGE('male.png'),
