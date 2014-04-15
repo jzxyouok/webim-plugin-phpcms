@@ -5,13 +5,14 @@
   'dbuser' => "webim",
   'dbpassword' => "webim",
   'dbname' => "phpcms",
+  'dbprefix' => "webim_",
     
   //WebIM Config
   'isopen' => true,
   'debug' => true,
   'domain' => 'localhost',
   'apikey' => 'public',
-  'server' => 'http://localhost:8000',
+  'server' => 'http://t.nextalk.im:8000',
   'emot' => 'default',
   'theme' => 'base',
   'opacity' => '80',

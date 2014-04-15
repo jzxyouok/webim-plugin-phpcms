@@ -1,14 +1,50 @@
 <?php
 
+/**
+ * WebIM-for-PHP5 
+ *
+ * @author      Ery Lee <ery.lee@gmail.com>
+ * @copyright   2014 NexTalk.IM
+ * @link        http://github.com/webim/webim-for-php5
+ * @license     MIT LICENSE
+ * @version     5.4.1
+ * @package     WebIM
+ *
+ * MIT LICENSE
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 namespace WebIM;
 
 /**
  * WebIM Plugin
+ *
+ * @package WebIM
+ * @autho Ery Lee
+ * @since 5.4.1
  */
 class Plugin {
 
 	/*
-	 * Current User of Visitor 
+	 * Current user or visitor 
 	 */
 	protected $user = null;
 
@@ -29,6 +65,8 @@ class Plugin {
 
 	/*
 	 * API: uid of logined user
+     *
+     * @return string uid of logined user
 	 */
 	protected function uid() {
         global $_SESSION;
@@ -37,6 +75,8 @@ class Plugin {
 
 	/*
 	 * API: load user
+     *
+     * @return array user
 	 */
 	protected function user($uid) {
 		//NOTICE: demo user
@@ -52,9 +92,11 @@ class Plugin {
             'status' => "",
         );
 	}
-	
+
 	/*
 	 * API: load visitor
+     *
+     * @return array visitor
 	 */
 	protected function visitor() {
 		if ( isset($_COOKIE['_webim_visitor_id']) ) {
@@ -63,9 +105,10 @@ class Plugin {
 			$id = substr(uniqid(), 6);
 			setcookie('_webim_visitor_id', $id, time() + 3600 * 24 * 30, "/", "");
 		}
+        $vid = $this->_vid($id);
         return array(
-            'uid' => 'vid:' . $id,
-            'id' => 'vid:' . $id,
+            'uid' => $vid,
+            'id' => $vid, 
             'nick' => "v".$id,
             'presence' => 'online',
             'show' => "available",
@@ -77,23 +120,27 @@ class Plugin {
 	}
 
     /**
-     * visitor id?
+     * Is visitor id?
+     *
+     * @return true|false
      */
     protected function isvid($uid) {
         return strpos($uid, 'vid:') === 0;
     }
 
     /**
-     * Current user of the site
+     * Current user 
      *
-     * @return user array 
+     * @return array current user 
      */
     public function currentUser() {
         return $this->user;
     }
 
     /**
-     * logined?
+     * Is logined?
+     *
+     * @return true|false
      */
     public function logined() {
         return ($this->user != null);
@@ -104,7 +151,7 @@ class Plugin {
      *
      * @param string $uid current uid
 	 *
-     * @return array buddies
+     * @return array Buddy list
      *
 	 * Buddy:
 	 *
@@ -120,10 +167,9 @@ class Plugin {
 	 *
 	 */
 	public function buddies($uid) {
-        $buddies = array();
-        $ids = range(1, 10);
-        foreach ($ids  as $id) {
-            $buddies[] = array(
+        //TODO: DEMO Code
+        return array_map(function($id){
+            return array(
                 'id' => 'uid' . $id,
                 'uid' => 'uid' . $id,
                 'group' => 'friend',
@@ -131,10 +177,10 @@ class Plugin {
                 'presence' => 'offline',
                 'show' => 'unavailable',
                 'status' => '#',
-                'pic_url' => WEBIM_IMAGE('male.png'),
-            ); 
-        }
-        return $buddies;
+                'pic_url' => WEBIM_IMAGE('male.png')
+            );
+        
+        }, range(1, 10));
 	}
 
 	/*
@@ -142,13 +188,13 @@ class Plugin {
 	 *
      * @param array $ids buddy id array
      *
-     * @return array buddies
+     * @return array Buddy list
      *
 	 * Buddy
 	 */
 	public function buddiesByIds($ids) {
-        if( empty($ids) ) return array(); foreach($ids as $id) {
-            $buddies[] = array(
+        return array_map(function($id) {
+            return array(
                 'id' => $id,
                 'uid' => $id,
                 'group' => 'friend',
@@ -156,12 +202,11 @@ class Plugin {
                 'presence' => 'offline',
                 'show' => 'unavailable',
                 'status' => '#',
-                'pic_url' => WEBIM_IMAGE('male.png'),
-            ); 
-        }
-		return $buddies;	
+                'pic_url' => WEBIM_IMAGE('male.png')
+            );
+        }, $ids);
 	}
-	
+
 	/*
 	 * API：rooms of current user
      * 
@@ -181,17 +226,18 @@ class Plugin {
 	 *	blocked:    true | false
 	 */
 	public function rooms($uid) {
-		$demoRoom = array(
-			'id' => '1',
+        //TODO: DEMO CODE
+		$room = array(
+			'id' => 'room1',
             'name' => 'room1',
-			'nick' => 'Persist Room',
+			'nick' => 'Room',
 			'url' => "#",
 			'pic_url' => WEBIM_IMAGE('room.png'),
-			'status' => "Persist Room",
+			'status' => "Room",
 			'blocked' => false,
             'temporary' => false
 		);
-		return array( $demoRoom );	
+		return array( $room );	
 	}
 
 	/*
@@ -205,7 +251,19 @@ class Plugin {
      *
 	 */
 	function roomsByIds($ids) {
-		return array();	
+        $rooms = array();
+        foreach($ids as $id) {
+            if($id === 'room1') { 
+                $rooms[] = array(
+                    'id' => $id,
+                    'name' => $id,
+                    'nick' => 'room'.$id,
+                    'url' => "#",
+                    'pic_url' => WEBIM_IMAGE('room.png')
+                );
+            }
+        }
+		return $rooms;
 	}
 
     /**
@@ -215,54 +273,40 @@ class Plugin {
      * 
      */
     function members($room) {
-        $members = array();
-        foreach (range(1, 10)  as $id) {
-            $members[] = array(
+        //TODO: DEMO CODE
+        return array_map(function($id) {
+            return array(
                 'id' => 'uid' . $id,
                 'uid' => 'uid' . $id,
                 'nick' => 'user'.$id
             ); 
-        }
-        return $members;
-    }
-
-    /**
-     * room by id
-     *
-     * $param $id string roomid
-     *
-     */
-    function room($id) {
-        if($id == '1') {
-            return array(
-                'id' => '1',
-                'name' => 'room1',
-                'nick' => 'Persist Room',
-                'url' => "#",
-                'pic_url' => WEBIM_IMAGE('room.png'),
-                'status' => "Demo Room",
-                'blocked' => false,
-                'temporary' => false
-            );
-        }
-        return null;
+        }, range(1, 10));
     }
 
 	/*
 	 * API: notifications of current user
 	 *
-     * @return notifications array 
+     * @return array  notification list
      *
 	 * Notification:
 	 *
 	 * 	text: text
 	 * 	link: link
 	 */	
-	function notifications($uid) {
-        $demo = array('text' => 'Notification', 'link' => '#');
-		return array($demo);
+	public function notifications($uid) {
+        $noti = array('text' => 'Notification', 'link' => '#');
+		return array($noti);
 	}
 
+    /**
+     * Visitor id
+     *
+     * @param string $id raw id
+     * @return string visitor id
+     */
+    protected function _vid($id) { 
+        return 'vid:'.$id; 
+    }
 
 }
 

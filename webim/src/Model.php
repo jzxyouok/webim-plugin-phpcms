@@ -1,16 +1,50 @@
 <?php
 
+/**
+ * WebIM-for-PHP5 
+ *
+ * @author      Ery Lee <ery.lee@gmail.com>
+ * @copyright   2014 NexTalk.IM
+ * @link        http://github.com/webim/webim-for-php5
+ * @license     MIT LICENSE
+ * @version     5.4.1
+ * @package     WebIM
+ *
+ * MIT LICENSE
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
 namespace WebIM;
 
-function TName($table) { return 'webim_' . $table; }
-
-function T($table) { return \ORM::forTable(TName($table)); }
-
 /**
- * 数据模型类
+ * WebIM Data Model
+ *
+ * @package WebIM
+ * @autho Ery Lee
+ * @since 5.4.1
  */
 class Model {
 
+    /**
+     * Configure ORM
+     */
     public function __construct() {
         global $IMC;
         \ORM::configure('mysql:host=' . $IMC['dbhost']. ';dbname=' . $IMC['dbname']);
@@ -22,15 +56,20 @@ class Model {
     }
     
     /**
-     * 读取历史消息
+     * Get histories 
+     *
+     * @params string $uid current uid
+     * @params string $with the uid that talk with
+     * @params 'chat'|'grpchat' $type history type
+     * @params integer $limit result limit
      */
     public function histories($uid, $with, $type = 'chat',  $limit = 30) {
         if( $type === 'chat') {
-            $query = T('histories')->where('type', 'chat')
+            $query = $this->T('histories')->where('type', 'chat')
                 ->whereRaw("(`to`= ? AND `from`= ? AND `fromdel` != 1) OR (`send` = 1 AND `from`= ? AND `to`= ? AND `todel` != 1)", array($with, $uid, $with, $uid))
                 ->orderByDesc('timestamp')->limit($limit);
         } else {
-            $query = T('histories')->where('type', 'grpchat')
+            $query = $this->T('histories')->where('type', 'grpchat')
                 ->where('to', $with)
                 ->where('send', 1)
                 ->orderByDesc('timestamp')->limit($limit);
@@ -39,54 +78,69 @@ class Model {
     }
 
     /**
-     * 读取用户的离线消息
+     * Get offline histories
+     *
+     * @params string $uid current uid
+     * @params integer $limit result limit
      */
 	public function offlineHistories($uid, $limit = 50) {
-        $query = T('histories')->where('to', $uid)->whereNotEqual('send', 1)
+        $query = $this->T('histories')->where('to', $uid)->whereNotEqual('send', 1)
             ->orderByDesc('timestamp')->limit($limit);
         return array_reverse( $query->findArray() );
 	}
 
     /**
-     * 保存历史消息
+     * Save history
+     *
+     * @params array $message message object
      */
     public function insertHistory($message) {
-        $history = T('histories')->create(); 
+        $history = $this->T('histories')->create(); 
         $history->set($message)->setExpr('created', 'NOW()');
         $history->save();
     }
 
     /**
-     * 清除历史消息
+     * Clear histories
+     *
+     * @params string $uid current uid
+     * @params string $with user that talked with
      */
     public function clearHistories($uid, $with) {
-        T('histories')->where('from', $uid)->where('to', $with)
+        $this->T('histories')->where('from', $uid)->where('to', $with)
             ->findResultSet()
             ->set(array( "fromdel" => 1, "type" => "chat" ))
             ->save();
-        T('histories')->where('to', $uid)->where('from', $with)
+        $this->T('histories')->where('to', $uid)->where('from', $with)
             ->findResultSet()
             ->set(array( "todel" => 1, "type" => "chat" ))
             ->save();
-        T('histories')->where('todel', 1)->where('fromdel', 1)
+        $this->T('histories')->where('todel', 1)->where('fromdel', 1)
             ->deleteMany();
     }
 
     /**
-     * 离线消息已被读取 
+     * Offline histories readed
+     *
+     * @param string $uid user id
      */
 	public function offlineReaded($uid) {
-        T('histories')->where('to', $uid)->where('send', 0)->findResultSet()->set('send', 1)->save();
+        $this->T('histories')->where('to', $uid)->where('send', 0)->findResultSet()->set('send', 1)->save();
 	}
 
     /**
-     * 用户设置
+     * User setting
+     *
+     * @param string @uid userid
+     * @param string @data json 
+     *
+     * @return object|null
      */
     public function setting($uid, $data = null) {
-        $setting = T('settings')->where('uid', $uid)->findOne();
+        $setting = $this->T('settings')->where('uid', $uid)->findOne();
         if (func_num_args() === 1) { //get setting
            if($setting) return json_decode($setting->data); 
-           return null;
+            return new \stdClass();
         } 
         //save setting
         if($setting) {
@@ -94,7 +148,7 @@ class Model {
             $setting->data = $data;
             $setting->save();
         } else {
-            $setting = T('settings')->create();
+            $setting = $this->T('settings')->create();
             $setting->set(array(
                 'uid' => $uid,
                 'data' => $data
@@ -104,75 +158,87 @@ class Model {
     }
 
     /**
-     * 根据ID读取讨论组
-     */
-    public function room($id) {
-        $room = T('rooms')->where('name', $id)->findOne();
-        if($room) {
-            return array(
-                'id' => $room->name,
-                'name' => $room->name,
-                'nick' => $room->nick,
-                "url" => "#",
-                "pic_url" => WEBIM_IMAGE("room.png"),
-                "status" => "",
-                "temporary" => true,
-                "blocked" => false
-            );
-        }
-        return null;
-    }
-
-    /**
-     * 读取用户的全部讨论组
+     * All rooms of the user
+     *
+     * @param string $uid user id
+     * @return array rooms array
      */
     public function rooms($uid) {
-        $rooms = T('members')
+        $rooms = $this->T('members')
             ->tableAlias('t1')
             ->select('t1.room', 'name')
             ->select('t2.nick', 'nick')
-            ->join(TName('rooms'), array('t1.room', '=', 't2.name'), 't2')
-            ->where('t1.uid', $uid)->findMany();
-        $rtRooms = array();
-        foreach($rooms as $room) {
-            $rtRooms[] = array(
-                'id' => $room->name,
-                'nick' => $room->nick,
-                "url" => "#",
+            ->select('t2.url', 'url')
+            ->join($this->prefix('rooms'), array('t1.room', '=', 't2.name'), 't2')
+            ->where('t1.uid', $uid)->findArray();
+        return array_map(function($room) {
+            return array(
+                'id' => $room['name'],
+                'nick' => $room['nick'],
+                "url" => $room['url'],
                 "pic_url" => WEBIM_IMAGE("room.png"),
                 "status" => "",
                 "temporary" => true,
-                "blocked" => $this->isRoomBlocked($room->name, $uid)
-            );
-        }
-        return $rtRooms;
+                "blocked" => false);
+        }, $rooms);
     }
 
     /**
-     * 读取讨论组成员
+     * Get rooms by ids
+     *
+     * @param array $ids id list
+     * @return array rooms
+     */
+    public function roomsByIds($ids) {
+        if(empty($ids)) return array();
+        $rooms = $this->T('rooms')->whereIn('name', $ids)->findArray();
+        return array_map(function($room) {
+            return array(
+                'id' => $room['name'],
+                'name' => $room['name'],
+                'nick' => $room['nick'],
+                "url" => $room['url'],
+                "pic_url" => WEBIM_IMAGE("room.png"),
+                "status" => "",
+                "temporary" => true,
+                "blocked" => false);
+        }, $rooms);
+    }
+
+    /**
+     * Members of room
+     *
+     * @param string $room room id
+     * @return array members array
      */
     public function members($room) {
-        return T('members')
+        return $this->T('members')
             ->select('uid', 'id')
             ->select('nick')
             ->where('room', $room)->findArray();
     }
 
     /**
-     * 创建讨论组
+     * Create room
+     *
+     * @param array $data room data
+     * @return Room as array
      */
     public function createRoom($data) {
         $name = $data['name'];
-        $room = T('rooms')->where('name', $name)->findOne();
+        $room = $this->T('rooms')->where('name', $name)->findOne();
         if($room) return $room;
-        $room = T('rooms')->create();
+        $room = $this->T('rooms')->create();
         $room->set($data)->set_expr('created', 'NOW()')->set_expr('updated', 'NOW()');
         $room->save();
         return $room->asArray();
     }
 
     /**
-     * 邀请成员加入讨论组
+     * Invite members to join room
+     *
+     * $param string $room room id
+     * $param array $members member array
      */
     public function inviteRoom($room, $members) {
         foreach($members as $member) {
@@ -181,15 +247,19 @@ class Model {
     }
 
     /**
-     * 用户加入讨论组
+     * Join room
+     *
+     * $param string $room room id
+     * $param string $uid user id
+     * $param string $nick user nick
      */
     public function joinRoom($room, $uid, $nick) {
-        $member = T('members')
+        $member = $this->T('members')
             ->where('room', $room)
             ->where('uid', $uid)
             ->findOne();
         if($member == null) {
-            $member = T('members')->create();
+            $member = $this->T('members')->create();
             $member->set(array(
                 'uid' => $uid,
                 'nick' => $nick,
@@ -200,48 +270,83 @@ class Model {
     }
 
     /**
-     * 用户离开讨论组
+     * Leave room
+     *
+     * $param string $room room id
+     * $param string $uid user id
      */
     public function leaveRoom($room, $uid) {
-        T('members')->where('room', $room)->where('uid', $uid)->deleteMany();
+        $this->T('members')->where('room', $room)->where('uid', $uid)->deleteMany();
         //if no members, room deleted...
-        $data = T("members")->selectExpr('count(id)', 'total')->where('room', $room)->findOne();
+        $data = $this->T("members")->selectExpr('count(id)', 'total')->where('room', $room)->findOne();
         if($data && $data->total === 0) {
-            T('rooms')->where('name', $room)->deleteMany();
+            $this->T('rooms')->where('name', $room)->deleteMany();
         }
     }
 
     /**
-     * 屏蔽讨论组
+     * Block room
+     *
+     * $param string $room room id
+     * $param string $uid user id
      */
     public function blockRoom($room, $uid) {
-        $block = T('blocked')->select('id')
+        $block = $this->T('blocked')->select('id')
             ->where('room', $room)
             ->where('uid', $uid)->findOne();
         if($block == null) {
-            T('blocked')->create()
+            $this->T('blocked')->create()
                 ->set('room', $room)
                 ->set('uid', $uid)
                 ->setExpr('blocked', 'NOW()')
                 ->save();
         }
-    
     }
 
     /**
-     * 讨论组是否屏蔽
+     * Is room blocked
+     *
+     * $param string $room room id
+     * $param string $uid user id
+     *
+     * @return true|false
      */
     public function isRoomBlocked($room, $uid) {
-        $block = T('blocked')->select('id')->where('uid', $uid)->where('room', $room)->findOne();
+        $block = $this->T('blocked')->select('id')->where('uid', $uid)->where('room', $room)->findOne();
         return !(null == $block);
     }
 
     /**
-     * 解除讨论组屏蔽
+     * Unblock room
+     *
+     * @param string $room room id
+     * @param string $uid user id
      */
     public function unblockRoom($room, $uid) {
-        T('blocked')->where('uid', $uid)->where('room', $room)->deleteMany();
+        $this->T('blocked')->where('uid', $uid)->where('room', $room)->deleteMany();
     }
+
+    /**
+     * Table query
+     *
+     * @param string $table table name
+     * @return Query 
+     */
+    private function T($table) {
+        return \ORM::forTable($this->prefix($table)); 
+    }
+
+    /**
+     * Table name with prefix
+     *
+     * @param string $table table name
+     * @return string table name with prefix
+     */
+    private function prefix($table) { 
+        global $IMC;
+        return $IMC['dbprefix'] . $table;
+    }
+
 
 }
 

@@ -7,7 +7,7 @@ namespace WebIM;
  *
  * @see http://nextalk.im/docs/api
  */
-class WebIM {
+class Client {
 
     /**
     * Version
@@ -17,7 +17,7 @@ class WebIM {
     /**
      * Server
      */
-    const SERVER = 'http://nextalk.im:8000';
+    const SERVER = 'http://t.nextalk.im:8000';
 
     const TIMEOUT = 15;
 
@@ -47,7 +47,15 @@ class WebIM {
      * APIKEY
      */
     private $apikey;
+
+    /**
+     * Ticket
+     */
     private $ticket;
+
+    /**
+     * NexTalk Server
+     */
     private $server;
     private $version;
     private $timeout;
@@ -87,12 +95,14 @@ class WebIM {
         if(is_array($buddy_ids)) $buddy_ids = implode(',', $buddy_ids);
         if(is_array($room_ids)) $room_ids = implode(',', $room_ids);
         if( !$show ) $show = $this->endpoint->show;
+        $endpoint = $this->endpoint;
+        $status = isset($endpoint->status) ?  $endpoint->status : '';
 		$data = array_merge($this->reqdata(), array(
 			'rooms'=> $room_ids, 
 			'buddies'=> $buddy_ids, 
-			'name'=> $this->endpoint->id, 
-			'nick'=> $this->endpoint->nick, 
-			'status'=> $this->endpoint->status, 
+			'name'=> $endpoint->id, 
+			'nick'=> $endpoint->nick, 
+			'status'=> $status, 
 			'show' => $show
 		));
 		$response = $this->request('presences/online', $data, 'POST');
@@ -188,7 +198,7 @@ class WebIM {
 	 *
 	 */
 	public function message($from, $to, $body, $type = 'chat', $style='', $timestamp = null) {
-        if(!$timestamp) $timestamp = $this->microtimeFloat() * 1000;
+        if(!$timestamp) $timestamp = microtime(true) * 1000;
 		$data = array_merge($this->reqdata(), array(
 			'nick' => $this->endpoint->nick,
 			'to' => $to,
@@ -298,10 +308,6 @@ class WebIM {
         return $data;
     }
 
-    private function microtimeFloat() {
-        list($usec, $sec) = explode(" ", microtime());
-        return ((float)$usec + (float)$sec);
-    }
 
 }
 

@@ -2198,8 +2198,8 @@ model("history", {
  * Copyright (c) 2013 Arron
  * Released under the MIT, BSD, and GPL Licenses.
  *
- * Date: Fri Apr 4 09:59:10 2014 +0800
- * Commit: 4ebb53cef9a9983fbc3065b01aebadc2c3a43d04
+ * Date: Tue Apr 15 09:51:45 2014 +0800
+ * Commit: e4153daaf668aeb65b29160546bb76dafb4f70ae
  */
 (function(window,document,undefined){
 
@@ -4476,7 +4476,7 @@ widget("chat",{
 			self._updateInfo(info);
 		}
 		var userOn = self.options.user.presence == "online";
-		var buddyOn = self.options.info.presence == "online";
+		var buddyOn = (self.options.info.presence == "online") && (self.options.info.show != "invisible");
 		if(!userOn){
 			self.notice(i18n("user offline notice"));
 		}else if(!buddyOn){
@@ -5279,8 +5279,12 @@ app("buddy", function( options ){
 	var grepVisible = function(a){ return a.show != "invisible" && a.presence == "online"};
 	var grepInvisible = function(a){ return a.show == "invisible"; };
 	//some buddies online.
-	buddy.bind("online", function( e, data){
-		buddyUI.add(grep(data, grepVisible));
+	buddy.bind("online", function( e, data) {
+		if ( options.showUnavailable ) {
+            buddyUI.add(data);
+        } else {
+            buddyUI.add(grep(data, grepVisible));
+        }
 		buddyUI.update(data);
 	});
 	//some buddies offline.
@@ -5296,9 +5300,14 @@ app("buddy", function( options ){
 	});
 	//some information has been modified.
 	buddy.bind( "update", function( e, data){
-		buddyUI.add(grep(data, grepVisible));
-		buddyUI.update(grep(data, grepVisible));
-		buddyUI.remove(map(grep(data, grepInvisible), mapId));
+		if ( options.showUnavailable ) {
+            buddyUI.add(data);
+            buddyUI.update(data);
+        } else { 
+            buddyUI.add(grep(data, grepVisible));
+            buddyUI.update(grep(data, grepVisible));
+            buddyUI.remove(map(grep(data, grepInvisible), mapId));
+        }
 	} );
 	buddyUI.offline();
 	im.bind( "beforeOnline", function(){
@@ -5500,7 +5509,7 @@ self.trigger("offline");
 		}
 	},
     isOnline: function(show) {
-        return !((show == "unavailable") || (show == "hidden"));
+        return !((show == "unavailable") || (show == "invisible"));
     },
 	_addOne:function(info, end) {
 		var self = this, li = self.li, on_li = self.on_li, li_group = self.li_group, on_li_group = self.on_li_group;
