@@ -44,44 +44,23 @@ namespace WebIM;
 class Plugin {
 
 	/*
-	 * Current user or visitor 
-	 */
-	protected $user = null;
-
-	/*
 	 * Init User
 	 */
-    public function __construct() {
-        global $IMC;
-        $uid = $this->uid();
-		if($uid) {
-            $this->user = $this->user($uid);
-		} else if($IMC['visitor']) {//visitor 
-			$this->user = $this->visitor();
-        } else {//no user or visitor
+    public function __construct() { 
+    }
 
-        }
-	}
 
-	/*
-	 * API: uid of logined user
+    /**
+     * API: current user
      *
-     * @return string uid of logined user
-	 */
-	protected function uid() {
+     * @return object current user
+     */
+    public function user() {
         global $_SESSION;
-		return isset($_SESSION['uid']) ? $_SESSION['uid'] : null;
-	}
+		$uid = isset($_SESSION['uid']) ? $_SESSION['uid'] : null;
+        if( !$uid ) return null;
 
-	/*
-	 * API: load user
-     *
-     * @return array user
-	 */
-	protected function user($uid) {
-		//NOTICE: demo user
-		return array(
-            'uid' => $uid,
+		return (object)array(
             'id' => $uid,
             'nick' => preg_replace('/uid/', 'user', $uid),
             'presence' => 'online',
@@ -91,59 +70,6 @@ class Plugin {
             'role' => 'user',
             'status' => "",
         );
-	}
-
-	/*
-	 * API: load visitor
-     *
-     * @return array visitor
-	 */
-	protected function visitor() {
-		if ( isset($_COOKIE['_webim_visitor_id']) ) {
-			$id = $_COOKIE['_webim_visitor_id'];
-		} else {
-			$id = substr(uniqid(), 6);
-			setcookie('_webim_visitor_id', $id, time() + 3600 * 24 * 30, "/", "");
-		}
-        $vid = $this->_vid($id);
-        return array(
-            'uid' => $vid,
-            'id' => $vid, 
-            'nick' => "v".$id,
-            'presence' => 'online',
-            'show' => "available",
-            'pic_url' => WEBIM_IMAGE('male.png'),
-            'role' => 'visitor',
-            'url' => "#",
-            'status' => "",
-        );
-	}
-
-    /**
-     * Is visitor id?
-     *
-     * @return true|false
-     */
-    protected function isvid($uid) {
-        return strpos($uid, 'vid:') === 0;
-    }
-
-    /**
-     * Current user 
-     *
-     * @return array current user 
-     */
-    public function currentUser() {
-        return $this->user;
-    }
-
-    /**
-     * Is logined?
-     *
-     * @return true|false
-     */
-    public function logined() {
-        return ($this->user != null);
     }
 
 	/*
@@ -168,19 +94,7 @@ class Plugin {
 	 */
 	public function buddies($uid) {
         //TODO: DEMO Code
-        return array_map(function($id){
-            return array(
-                'id' => 'uid' . $id,
-                'uid' => 'uid' . $id,
-                'group' => 'friend',
-                'nick' => 'user'.$id,
-                'presence' => 'offline',
-                'show' => 'unavailable',
-                'status' => '#',
-                'pic_url' => WEBIM_IMAGE('male.png')
-            );
-        
-        }, range(1, 10));
+        return array_map( array($this, '_buddy'), range(1, 10) );
 	}
 
 	/*
@@ -192,20 +106,24 @@ class Plugin {
      *
 	 * Buddy
 	 */
-	public function buddiesByIds($ids) {
-        return array_map(function($id) {
-            return array(
-                'id' => $id,
-                'uid' => $id,
-                'group' => 'friend',
-                'nick' => preg_replace('/uid/', 'user', $id),
-                'presence' => 'offline',
-                'show' => 'unavailable',
-                'status' => '#',
-                'pic_url' => WEBIM_IMAGE('male.png')
-            );
-        }, $ids);
+	public function buddiesByIds($uid, $ids) {
+        return array_map( array($this, '_buddy'), $ids );
 	}
+
+    /**
+     * Demo Buddy
+     */
+    private function _buddy($id) {
+        return (object) array(
+            'id' => 'uid' . $id,
+            'group' => 'friend',
+            'nick' => 'user'.$id,
+            'presence' => 'offline',
+            'show' => 'unavailable',
+            'status' => '#',
+            'pic_url' => WEBIM_IMAGE('male.png')
+        );
+    }
 
 	/*
 	 * API：rooms of current user
@@ -227,7 +145,7 @@ class Plugin {
 	 */
 	public function rooms($uid) {
         //TODO: DEMO CODE
-		$room = array(
+		$room = (object)array(
 			'id' => 'room1',
             'name' => 'room1',
 			'nick' => 'Room',
@@ -250,11 +168,11 @@ class Plugin {
 	 * Room
      *
 	 */
-	function roomsByIds($ids) {
+	public function roomsByIds($uid, $ids) {
         $rooms = array();
         foreach($ids as $id) {
             if($id === 'room1') { 
-                $rooms[] = array(
+                $rooms[] = (object)array(
                     'id' => $id,
                     'name' => $id,
                     'nick' => 'room'.$id,
@@ -272,15 +190,19 @@ class Plugin {
      * $param $room string roomid
      * 
      */
-    function members($room) {
+    public function members($room) {
         //TODO: DEMO CODE
-        return array_map(function($id) {
-            return array(
-                'id' => 'uid' . $id,
-                'uid' => 'uid' . $id,
-                'nick' => 'user'.$id
-            ); 
-        }, range(1, 10));
+        return array_map( array($this, '_member'), range(1, 10) );
+    }
+
+    /**
+     * Demo member
+     */
+    private function _member($id) {
+        return (object)array(
+            'id' => 'uid' . $id,
+            'nick' => 'user'.$id
+        ); 
     }
 
 	/*
@@ -294,18 +216,23 @@ class Plugin {
 	 * 	link: link
 	 */	
 	public function notifications($uid) {
-        $noti = array('text' => 'Notification', 'link' => '#');
+        $noti = (object)array('text' => 'Notification', 'link' => '#');
 		return array($noti);
 	}
 
     /**
-     * Visitor id
+     * API: menu
      *
-     * @param string $id raw id
-     * @return string visitor id
+     * @return array menu list
+     *
+     * Menu:
+     *
+     * icon
+     * text
+     * link
      */
-    protected function _vid($id) { 
-        return 'vid:'.$id; 
+    public function menu($uid) {
+        return array();
     }
 
 }

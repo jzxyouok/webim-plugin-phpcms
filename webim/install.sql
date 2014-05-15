@@ -6,7 +6,7 @@ CREATE TABLE `webim_settings` (
 	  `data` text,
 	  `created` datetime DEFAULT NULL,
 	  `updated` datetime DEFAULT NULL,
-      UNIQUE KEY `webim_setting_uid` (`uid`)
+      UNIQUE KEY `webim_setting_uid` (`uid`),
 	  PRIMARY KEY (`id`)
 ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
@@ -67,8 +67,8 @@ CREATE TABLE `webim_blocked` (
       UNIQUE KEY `webim_blocked_room_uid` (`uid`,`room`)
 ) ENGINE=MyISAM AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
-DROP TABLE IF EXISTS webim_visitors;
-CREATE TABLE webim_visitors (
+DROP TABLE IF EXISTS `webim_visitors`;
+CREATE TABLE `webim_visitors` (
       `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
       `name` varchar(60) DEFAULT NULL,
       `ipaddr` varchar(60) DEFAULT NULL,

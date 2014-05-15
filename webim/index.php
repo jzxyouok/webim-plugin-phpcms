@@ -12,20 +12,14 @@ if(phpversion() < '5.3.10') {
     exit('PHP version should be > 5.3.10');
 }
 
-include dirname(__FILE__) . '/../phpcms/base.php';
+require('env.php');
 
-define('WEBIM_DEBUG', true);
-
-if(WEBIM_DEBUG) {
+if( defined('WEBIM_DEBUG') ) {
     session_start();
 	error_reporting( E_ALL );
 } else {
 	error_reporting( E_ALL & ~E_NOTICE & ~E_STRICT );
 }
-
-define('WEBIM_VERSION', '5.4');
-
-define('WEBIM_PRODUCT', 'phpcms');
 
 function WEBIM_PATH() {
 	global $_SERVER;
@@ -36,6 +30,10 @@ function WEBIM_PATH() {
 function WEBIM_IMAGE($img) {
     return WEBIM_PATH() . "static/images/{$img}";
 }
+
+//integrated with phpcms
+include dirname(__FILE__) . '/../phpcms/base.php';
+
 
 /**
  * Configuration
@@ -84,3 +82,4 @@ require WEBIM_ROOT . '/PHPCMS_Plugin.php';
 
 \WebIM\App::run(new \WebIM\PHPCMS_Plugin());
 
+?>

@@ -74,7 +74,7 @@ class Model {
                 ->where('send', 1)
                 ->orderByDesc('timestamp')->limit($limit);
         }
-        return array_reverse($query->findArray());
+        return array_reverse( array_map( array($this, '_toObj'), $query->findArray() ) );
     }
 
     /**
@@ -86,7 +86,7 @@ class Model {
 	public function offlineHistories($uid, $limit = 50) {
         $query = $this->T('histories')->where('to', $uid)->whereNotEqual('send', 1)
             ->orderByDesc('timestamp')->limit($limit);
-        return array_reverse( $query->findArray() );
+        return array_reverse( array_map( array($this, '_toObj'), $query->findArray() ) );
 	}
 
     /**
@@ -144,7 +144,11 @@ class Model {
         } 
         //save setting
         if($setting) {
-            if(!is_string($data)) { $data = json_decode($data); }
+            if(is_string( $data )) {
+                $data = stripcslashes( $data );
+            } else {
+                $data = json_encode( $data );
+            }
             $setting->data = $data;
             $setting->save();
         } else {
@@ -171,16 +175,7 @@ class Model {
             ->select('t2.url', 'url')
             ->join($this->prefix('rooms'), array('t1.room', '=', 't2.name'), 't2')
             ->where('t1.uid', $uid)->findArray();
-        return array_map(function($room) {
-            return array(
-                'id' => $room['name'],
-                'nick' => $room['nick'],
-                "url" => $room['url'],
-                "pic_url" => WEBIM_IMAGE("room.png"),
-                "status" => "",
-                "temporary" => true,
-                "blocked" => false);
-        }, $rooms);
+        return array_map( array($this, '_roomObj'), $rooms );
     }
 
     /**
@@ -189,20 +184,25 @@ class Model {
      * @param array $ids id list
      * @return array rooms
      */
-    public function roomsByIds($ids) {
+    public function roomsByIds($uid, $ids) {
         if(empty($ids)) return array();
         $rooms = $this->T('rooms')->whereIn('name', $ids)->findArray();
-        return array_map(function($room) {
-            return array(
-                'id' => $room['name'],
-                'name' => $room['name'],
-                'nick' => $room['nick'],
-                "url" => $room['url'],
-                "pic_url" => WEBIM_IMAGE("room.png"),
-                "status" => "",
-                "temporary" => true,
-                "blocked" => false);
-        }, $rooms);
+        return array_map( array($this, '_roomObj'), $rooms );
+    }
+
+    /**
+     * room object
+     */
+    private function _roomObj($room) {
+        return (object)array(
+            'id' => $room['name'],
+            'name' => $room['name'],
+            'nick' => $room['nick'],
+            "url" => $room['url'],
+            "pic_url" => WEBIM_IMAGE("room.png"),
+            "status" => "",
+            "temporary" => true,
+            "blocked" => false);
     }
 
     /**
@@ -212,10 +212,11 @@ class Model {
      * @return array members array
      */
     public function members($room) {
-        return $this->T('members')
+        $members = $this->T('members')
             ->select('uid', 'id')
             ->select('nick')
             ->where('room', $room)->findArray();
+        return array_map( array($this, '_toObj'), $members );
     }
 
     /**
@@ -231,7 +232,7 @@ class Model {
         $room = $this->T('rooms')->create();
         $room->set($data)->set_expr('created', 'NOW()')->set_expr('updated', 'NOW()');
         $room->save();
-        return $room->asArray();
+        return $room;
     }
 
     /**
@@ -242,7 +243,7 @@ class Model {
      */
     public function inviteRoom($room, $members) {
         foreach($members as $member) {
-            $this->joinRoom($room, $member['uid'], $member['nick']);
+            $this->joinRoom($room, $member->id, $member->nick);
         }
     }
 
@@ -327,6 +328,76 @@ class Model {
     }
 
     /**
+     * Get visitor
+     */
+    function visitor() {
+        global $_COOKIE, $_SERVER;
+        if (isset($_COOKIE['_webim_visitor_id'])) {
+            $id = $_COOKIE['_webim_visitor_id'];
+        } else {
+            $id = substr(uniqid(), 6);
+            setcookie('_webim_visitor_id', $id, time() + 3600 * 24 * 30, "/", "");
+        }
+        $vid = 'vid:'. $id;
+        $visitor = $this->T('visitors')->where('name', $vid)->findOne();
+        if( !$visitor ) {
+            $ipaddr = isset($_SERVER['X-Forwarded-For']) ? $_SERVER['X-Forwarded-For'] : $_SERVER["REMOTE_ADDR"];
+            require_once dirname(__FILE__) . '/../vendor/webim/geoip-php/IP.class.php';
+            $loc = \IP::find($ipaddr);
+            if(is_array($loc)) $loc = implode('',  $loc);
+            $referer = isset($_SERVER['HTTP_REFERER']) ? $_SERVER['HTTP_REFERER'] : '';
+            $visitor = $this->T('visitors')->create();
+            $visitor->set(array(
+                "name" => $vid,
+                "ipaddr" => $ipaddr,
+                "url" => $_SERVER['REQUEST_URI'],
+                "referer" => $referer,
+                "location" => $loc,
+            ))->setExpr('created', 'NOW()');
+            $visitor->save();
+        }
+        return (object) array(
+            'id' => $vid,
+            'nick' => "v".$id,
+            'group' => "visitor",
+            'presence' => 'online',
+            'show' => "available",
+            'pic_url' => WEBIM_IMAGE('male.png'),
+            'role' => 'visitor',
+            'url' => "#",
+            'status' => "",
+        );
+    }
+
+    /**
+     * visitors by vids
+     */
+    function visitors($vids) {
+        if( count($vids)  == 0 ) return array();
+        $vids = implode("','", $vids);
+        $rows = $this->T('visitors')
+            ->select('name')
+            ->select('ipaddr')
+            ->select('location')
+            ->whereIn('name', $vids)
+            ->findMany();
+        $visitors = array();
+        foreach($rows as $v) {
+            $status = $v->location;
+            if( $v->ipaddr ) $status = $status . '(' . $v->ipaddr .')';
+            $visitors[] = (object)array(
+                "id" => $v->name,
+                "nick" => "v".substr($v->name, 4), //remove vid:
+                "group" => "visitor",
+                "url" => "#",
+                "pic_url" => WEBIM_IMAGE('male.png'),
+                "status" => $status, 
+            );
+        }
+        return $visitors;
+    }
+
+    /**
      * Table query
      *
      * @param string $table table name
@@ -343,11 +414,13 @@ class Model {
      * @return string table name with prefix
      */
     private function prefix($table) { 
-        global $IMC;
-        return $IMC['dbprefix'] . $table;
+        global $IMC; return $IMC['dbprefix'] . $table;
     }
 
+    private function _toObj($v) {
+        return (object)$v;
+    }
 
 }
 
-
+?>

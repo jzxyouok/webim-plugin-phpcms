@@ -9,7 +9,6 @@
     
   //WebIM Config
   'isopen' => true,
-  'debug' => true,
   'domain' => 'localhost',
   'apikey' => 'public',
   'server' => 'http://t.nextalk.im:8000',
@@ -18,6 +17,7 @@
   'opacity' => '80',
   'local' => 'zh-CN',
   'show_realname' => false,
+  'discussion' => true,
   'enable_room' => true,
   'enable_chatlink' => true,
   'enable_shortcut' => true,
