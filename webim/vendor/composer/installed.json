@@ -1,49 +1,5 @@
 [
     {
-        "name": "webim/geoip-php",
-        "version": "0.1",
-        "version_normalized": "0.1.0.0",
-        "source": {
-            "type": "git",
-            "url": "https://github.com/webim/geoip-php.git",
-            "reference": "a1cb1b10a9d47cbd061a14fcb996117d07a7cc0f"
-        },
-        "dist": {
-            "type": "zip",
-            "url": "https://api.github.com/repos/webim/geoip-php/zipball/a1cb1b10a9d47cbd061a14fcb996117d07a7cc0f",
-            "reference": "a1cb1b10a9d47cbd061a14fcb996117d07a7cc0f",
-            "shasum": ""
-        },
-        "require": {
-            "php": ">=5.3.0"
-        },
-        "time": "2014-04-02 15:52:45",
-        "type": "library",
-        "installation-source": "dist",
-        "autoload": {
-            "psr-0": {
-                "IP": ""
-            }
-        },
-        "notification-url": "https://packagist.org/downloads/",
-        "license": [
-            "MIT"
-        ],
-        "authors": [
-            {
-                "name": "Ery Lee",
-                "email": "ery.lee@gmail.com",
-                "homepage": "http://nextalk.im",
-                "role": "Company"
-            }
-        ],
-        "description": "Simple GeoIP library",
-        "homepage": "http://github.com/webim/geoip-php",
-        "keywords": [
-            "geoip"
-        ]
-    },
-    {
         "name": "j4mie/idiorm",
         "version": "v1.4.1",
         "version_normalized": "1.4.1.0",
@@ -147,6 +103,50 @@
             "instant message",
             "nextalk",
             "webim"
+        ]
+    },
+    {
+        "name": "webim/geoip-php",
+        "version": "0.1",
+        "version_normalized": "0.1.0.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/webim/geoip-php.git",
+            "reference": "a1cb1b10a9d47cbd061a14fcb996117d07a7cc0f"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/webim/geoip-php/zipball/a1cb1b10a9d47cbd061a14fcb996117d07a7cc0f",
+            "reference": "a1cb1b10a9d47cbd061a14fcb996117d07a7cc0f",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=5.3.0"
+        },
+        "time": "2014-04-02 15:52:45",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "psr-0": {
+                "IP": ""
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Ery Lee",
+                "email": "ery.lee@gmail.com",
+                "homepage": "http://nextalk.im",
+                "role": "Company"
+            }
+        ],
+        "description": "Simple GeoIP library",
+        "homepage": "http://github.com/webim/geoip-php",
+        "keywords": [
+            "geoip"
         ]
     }
 ]

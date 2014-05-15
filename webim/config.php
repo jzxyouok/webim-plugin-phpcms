@@ -8,6 +8,7 @@
   'dbprefix' => "webim_",
     
   //WebIM Config
+  'version' => '5.4.2',
   'isopen' => true,
   'domain' => 'localhost',
   'apikey' => 'public',
