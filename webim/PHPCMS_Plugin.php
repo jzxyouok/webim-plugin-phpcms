@@ -83,7 +83,7 @@ class PHPCMS_Plugin extends Plugin {
     public function buddiesByIds($uid, $ids) {
         if( empty($ids) ) return array();
         $ids = implode("','", $ids);
-        $members = $this->member_db->select("userid in ('{$uids}')");
+        $members = $this->member_db->select("userid in ('{$ids}')");
         $buddies = array();
         foreach($members as $m) {
             $buddies[] = (object)array(
